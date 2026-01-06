@@ -1,6 +1,44 @@
 # Clinical Trial Management Service - Home Test Assignment
 
 ## Overview
+A simple clinical trial application that let's the user add, edit and view clinical trials.
+
+### Backend
+- Java 21
+- Spring Boot
+- Spring Data JPA
+- H2 (in-memory database)
+- Gradle
+
+### Frontend
+- React
+- TypeScript
+- Vite
+---
+
+## Running the Application
+
+### Backend
+```bash
+cd backend/trial-service
+./gradlew bootRun
+```
+Backend will start at localhost:8080
+
+### Frontend
+```bash
+cd frontend/trial-frontend
+npm install
+npm run dev
+```
+Frontend is reachable via localhost:5137
+
+
+### Project guidelines
+89% salvestusruumist on kasutuses … Kui teie ruum saab otsa, ei saa te Drive’i salvestada, teenusesse Google Photos varundada ega Gmaili kasutada. Hankige uusaasta eripakkumisega aastapaketid üheks aastaks 50% soodsamalt.
+# Clinical Trial Management Service - Home Test Assignment
+
+## Overview
 
 Build a simple Clinical Trial management service that allows users to list, create, and update clinical trials. This assignment assesses your ability to create REST APIs using Spring Boot and build a functional frontend interface.
 
@@ -72,3 +110,5 @@ Please provide:
 ---
 
 Good luck!
+
+
