@@ -1,9 +1,8 @@
 package ee.menken.trial.controller;
 
-import ee.menken.trial.dto.CreateTrialRequest;
 import ee.menken.trial.dto.TrialResponse;
+import ee.menken.trial.dto.CreateTrialRequest;
 import ee.menken.trial.dto.UpdateTrialRequest;
-import ee.menken.trial.mapper.TrialMapper;
 import ee.menken.trial.service.TrialService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
-
 @RestController
 @RequestMapping("/api/trials")
 public class TrialController {
@@ -24,25 +22,22 @@ public class TrialController {
 
     @GetMapping
     public List<TrialResponse> getTrials() {
-        return trialService.list().stream()
-                .map(TrialMapper::toResponse)
-                .toList();
+        return trialService.list();
     }
 
     @PostMapping
-    public ResponseEntity<TrialResponse> createTrial(@Valid @RequestBody CreateTrialRequest request) {
-        var saved = trialService.create(request);
+    public ResponseEntity<TrialResponse> create(@Valid @RequestBody CreateTrialRequest req) {
+        TrialResponse created = trialService.create(req);
         return ResponseEntity
-                .created(URI.create("/api/trials/" + saved.getId()))
-                .body(TrialMapper.toResponse(saved));
+                .created(URI.create("/api/trials/" + created.id()))
+                .body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TrialResponse> updateTrial(
+    public ResponseEntity<TrialResponse> update(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateTrialRequest request
+            @Valid @RequestBody UpdateTrialRequest req
     ) {
-        var updated = trialService.update(id, request);
-        return ResponseEntity.ok(TrialMapper.toResponse(updated));
+        return ResponseEntity.ok(trialService.update(id, req));
     }
 }
