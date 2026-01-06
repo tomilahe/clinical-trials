@@ -34,8 +34,6 @@ npm run dev
 Frontend is reachable via localhost:5137
 
 
-### Project guidelines
-89% salvestusruumist on kasutuses … Kui teie ruum saab otsa, ei saa te Drive’i salvestada, teenusesse Google Photos varundada ega Gmaili kasutada. Hankige uusaasta eripakkumisega aastapaketid üheks aastaks 50% soodsamalt.
 # Clinical Trial Management Service - Home Test Assignment
 
 ## Overview
