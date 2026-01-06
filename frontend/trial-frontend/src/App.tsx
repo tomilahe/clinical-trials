@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { Trial, TrialRequest, TrialStatus } from './types'
 import { createTrial, fetchTrials, updateTrial } from './api'
 import './App.css'
@@ -6,15 +6,18 @@ import './App.css'
 const STATUSES: TrialStatus[] = ['DRAFT', 'ONGOING', 'COMPLETED']
 
 type FormState = { name: string; location: string; status: TrialStatus }
+type FormErrors = Partial<Record<keyof FormState, string>>
 
-function validate(form: FormState) {
-    const errors: Partial<Record<keyof FormState, string>> = {}
+function validate(form: FormState): FormErrors {
+    const errors: FormErrors = {}
 
     const name = form.name.trim()
+    console.log('name length:', name.length)
+
     if (!name) errors.name = 'Name is required'
     else if (name.length < 10 || name.length > 100) errors.name = 'Name must be 10-100 characters'
 
-    const loc = form.location
+    const loc = form.location.trim()
     if (loc && loc.length > 200) errors.location = 'Location must be max 200 characters'
 
     if (!form.status) errors.status = 'Status is required'
@@ -29,27 +32,28 @@ export default function App() {
 
     const [editingId, setEditingId] = useState<number | null>(null)
     const [form, setForm] = useState<FormState>({ name: '', location: '', status: 'DRAFT' })
-    const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({})
+    const [errors, setErrors] = useState<FormErrors>({})
 
     const isEditing = editingId !== null
 
-    async function refresh() {
+    const refresh = useCallback(async () => {
         setLoading(true)
         setApiError('')
         try {
-            setTrials(await fetchTrials())
+            const data = await fetchTrials()
+            setTrials(data)
         } catch (e: any) {
             setApiError(e?.message ?? 'Failed to load trials')
         } finally {
             setLoading(false)
         }
-    }
+    }, [])
 
     useEffect(() => {
         refresh()
-    }, [])
+    }, [refresh])
 
-    function startEdit(t: Trial) {
+    const startEdit = useCallback((t: Trial) => {
         setEditingId(t.id)
         setForm({
             name: t.name ?? '',
@@ -59,39 +63,49 @@ export default function App() {
         setErrors({})
         setApiError('')
         window.scrollTo({ top: 0, behavior: 'smooth' })
-    }
+    }, [])
 
-    function resetForm() {
+    const resetForm = useCallback(() => {
         setEditingId(null)
         setForm({ name: '', location: '', status: 'DRAFT' })
         setErrors({})
         setApiError('')
-    }
+    }, [])
 
-    async function onSubmit(e: React.FormEvent) {
-        e.preventDefault()
-        setApiError('')
+    const onSubmit = useCallback(
+        async (e: React.FormEvent) => {
+            e.preventDefault()
+            setApiError('')
 
-        const v = validate(form)
-        setErrors(v)
-        if (Object.keys(v).length) return
+            const v = validate(form)
+            setErrors(v)
+            if (Object.keys(v).length) return
 
-        const body: TrialRequest = {
-            name: form.name.trim(),
-            location: form.location.trim() === '' ? null : form.location.trim(),
-            status: form.status,
-        }
+            const name = form.name.trim()
+            const locationTrimmed = form.location.trim()
 
-        try {
-            if (isEditing) await updateTrial(editingId!, body)
-            else await createTrial(body)
+            const body: TrialRequest = {
+                name,
+                location: locationTrimmed === '' ? null : locationTrimmed,
+                status: form.status,
+            }
 
-            await refresh()
-            resetForm()
-        } catch (err: any) {
-            setApiError(err?.message ?? 'Request failed')
-        }
-    }
+            try {
+                if (isEditing) {
+                    if (editingId === null) return // extra safety
+                    await updateTrial(editingId, body)
+                } else {
+                    await createTrial(body)
+                }
+
+                await refresh()
+                resetForm()
+            } catch (err: any) {
+                setApiError(err?.message ?? 'Request failed')
+            }
+        },
+        [form, isEditing, editingId, refresh, resetForm],
+    )
 
     return (
         <div className="page">
@@ -132,6 +146,8 @@ export default function App() {
                                     value={form.name}
                                     onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                                     placeholder="10–100 characters"
+                                    maxLength={100}
+                                    aria-invalid={!!errors.name}
                                 />
                                 {errors.name && <div className="fieldError">{errors.name}</div>}
                             </div>
@@ -143,6 +159,8 @@ export default function App() {
                                     value={form.location}
                                     onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))}
                                     placeholder="Optional (max 200 chars)"
+                                    maxLength={200}
+                                    aria-invalid={!!errors.location}
                                 />
                                 {errors.location && <div className="fieldError">{errors.location}</div>}
                             </div>
@@ -204,13 +222,15 @@ export default function App() {
                                     <tbody>
                                     {trials.map((t) => (
                                         <tr key={t.id}>
-                                            <td className="monoClamp">{t.name}</td>
-                                            <td>{t.location ?? ''}</td>
+                                            <td className="monoClamp" title={t.name ?? ''}>
+                                                {t.name}
+                                            </td>
+                                            <td title={t.location ?? ''}>{t.location ?? ''}</td>
                                             <td>
                                                 <span className={`pill pill-${t.status.toLowerCase()}`}>{t.status}</span>
                                             </td>
                                             <td className="tableActions">
-                                                <button className="btn btnGhost" onClick={() => startEdit(t)}>
+                                                <button className="btn btnGhost" type="button" onClick={() => startEdit(t)}>
                                                     Edit
                                                 </button>
                                             </td>
